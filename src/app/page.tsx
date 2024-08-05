@@ -1,112 +1,111 @@
-import Image from "next/image";
+'use client'
+import ThemeToggle from "@/components/theme-toggle";
+import Link from 'next/link';
+import { useState } from "react";
+import isUrl from "@/lib/isUrl";
+import generateShortLink from "@/api/generateShortLink";
 
 export default function Home() {
+  const [loading, setLoading] = useState(false);
+  const [longLink, setLongLink] = useState("");
+  const [shortLink, setShortLink] = useState("");
+  const [isError, setIsError] = useState(false);
+
+  function handleChange(event: any) {
+    setIsError(false);
+    setLongLink(event.target.value);
+  }
+
+  async function generateLink() {
+    if(isUrl(longLink)) {
+      setIsError(false);
+      setLoading(true);
+      const data = await generateShortLink(longLink);
+      if(data == null) {
+        setLoading(false);
+        // @ts-ignore
+        document.getElementById('showError').showModal();
+      }
+      else {
+        // console.log(data.shortLink);
+        setLoading(false);
+        setShortLink(data.shortLink);
+        // @ts-ignore
+        document.getElementById('showShortLink').showModal();
+      }
+    }
+    else {
+      setIsError(true);
+    }
+  }
+
+  async function copyShortLink() {
+    navigator.clipboard.writeText(shortLink).then(() => {
+      // TODO 复制成功
+    });
+    setShortLink("");
+  }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <main className="m-0 min-h-screen min-w-screen box-border flex flex-col items-center">
+      <div className="md:w-full max-w-xl flex flex-col items-center mt-20 w-11/12">
+        <div className="join w-full justify-between">
+          <input className="input input-bordered join-item w-full focus:outline-none mr-[1px]" value={longLink}  onChange={handleChange} placeholder="Type long link here..." />
+            {
+              loading == false &&
+              <button className="btn no-animation rounded-l-none rounded-r-lg" onClick={ generateLink }>Generate</button>
+            }
+            { 
+              loading == true &&
+              <button className="btn btn-disabled no-animation rounded-l-none rounded-r-lg">
+                <span className="loading loading-spinner"></span>
+                Generate
+              </button>
+            }
+          <dialog id="showShortLink" className="modal">
+            <div className="modal-box">
+              <h3 className="font-bold text-lg select-none">
+                Successful!
+              </h3>
+              <p className="break-all pv-4 mt-[10px] mb-[5px]">
+                { shortLink }
+              </p>
+              <div className="modal-action mt-[10px]">
+                <form method="dialog">
+                  <button className="btn" onClick={copyShortLink}>Copy!</button>
+                </form>
+              </div>
+            </div>
+          </dialog>
+          <dialog id="showError" className="modal">
+            <div className="modal-box">
+              <h3 className="font-bold text-lg select-none">
+                Error
+              </h3>
+              <p className="break-all pv-4 mt-[10px] mb-[5px]">
+                Internal server error.
+              </p>
+              <div className="modal-action mt-[10px]">
+                <form method="dialog">
+                  <button className="btn" onClick={copyShortLink}>Close</button>
+                </form>
+              </div>
+            </div>
+          </dialog>
         </div>
-      </div>
-
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+        {
+          isError &&         
+          <span className="w-full label-text-alt flex flex-row mt-[10px] justify-start text-error">
+            Error: input link start with http or https pls.
+          </span>
+        }
+        <span className="w-full label-text-alt flex flex-row mt-[10px] justify-start">
+          <span className="hover:underline hover:cursor-pointer flex flex-row items-center"><svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 24 24" className="w-4 h-4 mr-1" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22ZM12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20ZM11 7H13V9H11V7ZM11 11H13V17H11V11Z"></path></svg><Link href="/help">What&apos;s this?</Link></span>
+          &nbsp;|&nbsp;<a target="_blank" href="https://github.com/maodaisuki/link" className="link link-hover">Github</a>
+          &nbsp;|&nbsp;<Link href="/api/docs" className="link link-hover">API</Link>
+          &nbsp;|&nbsp;
+          <ThemeToggle />
+        </span>
       </div>
     </main>
   );
